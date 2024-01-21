@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+
+import sys, argparse
+import lib.parse
+import lib.seq
+
+# create main parser
+parser = argparse.ArgumentParser(
+        prog='pbtk.py',
+        description='python bioinformatic tool kit',
+        usage='pbtk.py [input_type] [input_arguments] ',
+        epilog='Thank you for using pbtk!')
+
+# add version argument
+parser.add_argument('-v', '--version', action='version', version='0.0')
+
+# create subparsers for different subcommands
+subparsers = parser.add_subparsers(dest='subcommand', title='Input type', description='', metavar = '')
+
+# subparser fasta
+subparser_fasta = subparsers.add_parser('fasta', help='Individual fasta')
+subparser_fasta.add_argument('--input',    help='Input fasta', required = True)
+subparser_fasta.add_argument('--output',   help='Output file (Default: printed to stdout)', required=False, type=argparse.FileType('w'), nargs='?', default=sys.stdout)
+subparser_fasta_options = subparser_fasta.add_mutually_exclusive_group(required=True)
+subparser_fasta_options.add_argument('--length', action = 'store_true', help='Sequence lengths')
+subparser_fasta_options.add_argument('--gc',     action = 'store_true', help='Sequence GC content')
+subparser_fasta_options.add_argument('--at',     action = 'store_true', help='Sequence GC content')
+
+# subparser fastq
+subparser_fastq = subparsers.add_parser('fastq', help='Unpaired or paired for fastq')
+subparser_fastq.add_argument('--input',     help='Input fastq forawrd or unpaired', required = True)
+subparser_fastq.add_argument('--input2',    help='Input fastq reverse',             required = False)
+subparser_fastq_options = subparser_fastq.add_mutually_exclusive_group(required=True)
+subparser_fastq_options.add_argument('--n_reads',   help='Number of reads')
+subparser_fastq_options.add_argument('--length',    help='Sequence_lengths')
+
+# subparser sam
+subparser_sam = subparsers.add_parser('sam',  help='SAM or BAM')
+subparser_sam.add_argument('--input',         help='Input SAM or BAM', required = True)
+subparser_sam_options = subparser_sam.add_mutually_exclusive_group(required=True)
+subparser_sam_options.add_argument('--plot_coverage', help='Plot coverage')
+
+# arse the command-line arguments
+args = parser.parse_args()
+
+# fasta
+if args.subcommand == 'fasta':
+
+    # parse fasta
+    f = lib.parse.read_fasta(args.input)
+    
+    # iterate through fasta
+    for i in f:
+        name, seq = i[0], i[1]
+    
+        # length
+        if args.length:
+            lib.parse.print_all(f"{name}\t{lib.seq.length(seq)}", args.output)
+
+        # gc content
+        if args.gc: 
+            lib.parse.print_all(f"{name}\t{lib.seq.gc_content(seq)}", args.output)
+
+        # at content
+        if args.at:
+            lib.parse.print_all(f"{name}\t{lib.seq.at_content(seq)}", args.output)
+
+# fastq
+elif args.subcommand == 'fastq':
+    print(f'Fastq subcommand selected')
+    # Add your code for subcommand2 here
+
+# sam
+elif args.subcommand == 'sam':
+    print(f'Fastq subcommand selected')
+    # Add your code for subcommand2 here
+
+else:
+    print('No input type selected. Use -h or --help for usage information.')
+
