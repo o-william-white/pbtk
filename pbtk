@@ -3,6 +3,7 @@
 import sys, argparse
 import lib.parse
 import lib.seq
+import lib.format
 
 # create main parser
 parser = argparse.ArgumentParser(
@@ -22,9 +23,13 @@ subparser_fasta = subparsers.add_parser('fasta', help='Individual fasta')
 subparser_fasta.add_argument('--input',    help='Input fasta', required = True)
 subparser_fasta.add_argument('--output',   help='Output file (Default: printed to stdout)', required=False, type=argparse.FileType('w'), nargs='?', default=sys.stdout)
 subparser_fasta_options = subparser_fasta.add_mutually_exclusive_group(required=True)
-subparser_fasta_options.add_argument('--length', action = 'store_true', help='Sequence lengths')
-subparser_fasta_options.add_argument('--gc',     action = 'store_true', help='Sequence GC content')
-subparser_fasta_options.add_argument('--at',     action = 'store_true', help='Sequence GC content')
+subparser_fasta_options.add_argument('--length',       action = 'store_true', help='Sequence lengths')
+subparser_fasta_options.add_argument('--gc',           action = 'store_true', help='Sequence GC content')
+subparser_fasta_options.add_argument('--gc_window',    type = int,            help='Sequence GC content in window size provided')
+subparser_fasta_options.add_argument('--at',           action = 'store_true', help='Sequence AT content')
+subparser_fasta_options.add_argument('--at_window',    type = int,            help='Sequence AT content in window size provided')
+subparser_fasta_options.add_argument('--base_content', action = 'store_true', help='Counts of bases A, T, C, G, N')
+subparser_fasta_options.add_argument('--extract',      type = str,            help='Extract sequence based on "name" or "name:start-stop"')
 
 # subparser fastq
 subparser_fastq = subparsers.add_parser('fastq', help='Unpaired or paired for fastq')
@@ -60,10 +65,33 @@ if args.subcommand == 'fasta':
         # gc content
         if args.gc: 
             lib.parse.print_all(f"{name}\t{lib.seq.gc_content(seq)}", args.output)
+        
+        # gc content window
+        if args.gc_window:
+            for window_name, window_start, window_stop, window_seq in lib.seq.get_windows(name, seq, args.gc_window):
+                lib.parse.print_all(f"{window_name}\t{window_start}\t{window_stop}\t{lib.seq.gc_content(window_seq)}", args.output)
 
         # at content
         if args.at:
             lib.parse.print_all(f"{name}\t{lib.seq.at_content(seq)}", args.output)
+
+        # at content window
+        if args.at_window:
+            for window_name, window_start, window_stop, window_seq in lib.seq.get_windows(name, seq, args.at_window):
+                lib.parse.print_all(f"{window_name}\t{window_start}\t{window_stop}\t{lib.seq.at_content(window_seq)}", args.output)
+        
+        # base content
+        if args.base_content:
+            list_counts = lib.seq.base_content(seq)
+            list_counts = list(map(str, list_counts))
+            lib.parse.print_all(name + "\t" + "\t".join(list_counts), args.output)
+
+        # extract
+        if args.extract:
+            chrom, start, stop = lib.format.format_region(args.extract)
+            if name == chrom:
+                extract_seq = lib.format.extract(seq, start, stop)
+                lib.parse.print_all(f">{name}\n{extract_seq}", args.output)
 
 # fastq
 elif args.subcommand == 'fastq':
