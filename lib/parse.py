@@ -44,16 +44,17 @@ def check_fasta(filename):
     return filename
 
 # read fastq
-# only yields name and sequences by default so it can use the same functions for fasta files
 def read_fastq(filename):#, include_qual=False):
     fastq = open_all(filename)
-    for line in fastq:
-        if line.startswith("@"):
-            name = line.rstrip("\n")
-            seq = fastq.readline().rstrip("\n")
-            if fastq.readline().startswith("+"):
-                qual = fastq.readline().rstrip("\n")
-                yield [name, seq, qual]
+    while True:
+        # remove leading @
+        name = fastq.readline().rstrip("\n")[1:]
+        if not name:
+            break
+        seq  = fastq.readline().rstrip("\n")
+        plus = fastq.readline().rstrip("\n")
+        qual = fastq.readline().rstrip("\n")
+        yield [name, seq, qual]
     fastq.close()
 
 # check fastq

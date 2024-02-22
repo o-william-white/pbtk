@@ -11,29 +11,34 @@ assert length("ATCG") == 4
 
 # at content
 def at_content(seq):
+    seq = seq.upper()
     return (seq.count("A") + seq.count("T")) / len(seq)
-assert at_content("ATCG") == 0.5
+assert at_content("AtCG") == 0.5
 
 # gc content
 def gc_content(seq):
+    seq = seq.upper()
     return (seq.count("G") + seq.count("C")) / len(seq)
 assert at_content("ATCG") == 0.5
 
 # n_content
 def n_content(seq):
+    seq = seq.upper()
     return (seq.count("N") / len(seq))
 assert n_content("NNCG") == 0.5
 
 # base content
 def base_content(seq):
+    seq = seq.upper()
     list_counts = []
     for b in ["A", "T", "C", "G", "N"]:
-        list_counts.append(seq.upper().count(b))
+        list_counts.append(seq.count(b))
     return list_counts
 assert base_content("AATCgNNN") == [2, 1, 1, 1, 3]
 
 # sequence complexity (percentage of bases that are different from their next base)
 def sequence_complexity(seq):
+    seq = seq.upper()
     previous_base, differences = None, 0
     for base in seq:
         if previous_base == None:

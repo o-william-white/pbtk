@@ -30,20 +30,22 @@ subparser_fasta_options.add_argument('--at',           action = 'store_true', he
 subparser_fasta_options.add_argument('--at_window',    type = int,            help='Sequence AT content in window size provided')
 subparser_fasta_options.add_argument('--base_content', action = 'store_true', help='Counts of bases A, T, C, G, N')
 subparser_fasta_options.add_argument('--extract',      type = str,            help='Extract sequence based on "name" or "name:start-stop"')
+subparser_fasta_options.add_argument('--trim_name',    action = 'store_true', help='Trim sequence names from first space')
 
 # subparser fastq
 subparser_fastq = subparsers.add_parser('fastq', help='Unpaired or paired for fastq')
 subparser_fastq.add_argument('--input',     help='Input fastq forawrd or unpaired', required = True)
-subparser_fastq.add_argument('--input2',    help='Input fastq reverse',             required = False)
+subparser_fastq.add_argument('--output',   help='Output file (Default: printed to stdout)', required=False, type=argparse.FileType('w'), nargs='?', default=sys.stdout)
+# subparser_fastq.add_argument('--input2',    help='Input fastq reverse',             required = False)
 subparser_fastq_options = subparser_fastq.add_mutually_exclusive_group(required=True)
-subparser_fastq_options.add_argument('--n_reads',   help='Number of reads')
-subparser_fastq_options.add_argument('--length',    help='Sequence_lengths')
+# subparser_fastq_options.add_argument('--n_reads',   help='Number of reads')
+subparser_fastq_options.add_argument('--length', action = 'store_true',    help='Sequence_lengths')
 
 # subparser sam
 subparser_sam = subparsers.add_parser('sam',  help='SAM or BAM')
-subparser_sam.add_argument('--input',         help='Input SAM or BAM', required = True)
-subparser_sam_options = subparser_sam.add_mutually_exclusive_group(required=True)
-subparser_sam_options.add_argument('--plot_coverage', help='Plot coverage')
+#subparser_sam.add_argument('--input',         help='Input SAM or BAM', required = True)
+#subparser_sam_options = subparser_sam.add_mutually_exclusive_group(required=True)
+#subparser_sam_options.add_argument('--plot_coverage', help='Plot coverage')
 
 # arse the command-line arguments
 args = parser.parse_args()
@@ -93,10 +95,24 @@ if args.subcommand == 'fasta':
                 extract_seq = lib.format.extract(seq, start, stop)
                 lib.parse.print_all(f">{name}\n{extract_seq}", args.output)
 
+        # trim name
+        if args.trim_name:
+            name = lib.format.trim_name(name)
+            lib.parse.print_all(f">{name}\n{seq}", args.output)
+
 # fastq
 elif args.subcommand == 'fastq':
-    print(f'Fastq subcommand selected')
-    # Add your code for subcommand2 here
+
+    # parse fastq
+    f = lib.parse.read_fastq(args.input)
+
+    # iterate through fasta
+    for i in f:
+        name, seq, qual = i[0], i[1], i[2]
+
+        # length
+        if args.length:
+            lib.parse.print_all(f"{name}\t{lib.seq.length(seq)}", args.output)
 
 # sam
 elif args.subcommand == 'sam':

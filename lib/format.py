@@ -24,3 +24,6 @@ def extract(seq, start, stop):
 assert extract("ATCGATCG", None, None) == "ATCGATCG"
 assert extract("ATCGATCG", 0,    3) ==    "ATC"
 
+def trim_name(name):
+    return name.split(" ")[0]
+
